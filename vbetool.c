@@ -26,8 +26,8 @@ version 2
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/mman.h>
-
 #include <libx86.h>
+
 #include "vbetool.h"
 
 #define access_ptr_register(reg_frame,reg) (reg_frame -> reg)
