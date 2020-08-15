@@ -11,7 +11,7 @@ int do_invert_panel(void);
 int do_udev_post(char *);
 int do_post(int boot_flag);
 void restore_state(void);
-void save_state(void);
+int save_state(void);
 void text_mode(void);
 int check_console(void);
 int enable_vga(void);

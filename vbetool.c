@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
 		return do_post(1);
 	} else if (!strcmp(argv[1], "udevpost")) {
 
-#ifdef HAVE_PCI_DEVICE_VGAARB_INIT
+#ifdef HAVE_LIBPCIACCESS
 		int err = check_console();
 
 		if (err) {
@@ -319,7 +319,7 @@ int do_device_post(struct pci_device *dev, int has_arb)
 	unsigned int pci_id;
 	int ret;
 
-#ifdef HAVE_PCI_DEVICE_VGAARB_INIT
+#ifdef HAVE_LIBPCIACCESS
 	if (has_arb) {
 		pci_device_vgaarb_set_target(dev);
 		pci_device_vgaarb_lock();
@@ -338,7 +338,7 @@ int do_device_post(struct pci_device *dev, int has_arb)
 	pci_id = (dev->bus << 8) + (dev->dev << 3) +
 		    (dev->func & 0x7);
 	error = do_real_post(pci_id);
-#ifdef HAVE_PCI_DEVICE_VGAARB_INIT
+#ifdef HAVE_LIBPCIACCESS
 	if (has_arb)
 		pci_device_vgaarb_unlock();
 #endif
@@ -376,7 +376,7 @@ int pci_str_to_info(char *pci_string, struct pci_slot_match *match)
 	return 0;
 }
 
-#ifdef HAVE_PCI_DEVICE_VGAARB_INIT
+#ifdef HAVE_LIBPCIACCESS
 int do_udev_post(char *pci_string)
 {
 	struct pci_slot_match match;
@@ -431,7 +431,7 @@ int do_post(int boot_flag)
 	int has_arb = 1;
 	int ret;
 
-#ifdef HAVE_PCI_DEVICE_VGAARB_INIT
+#ifdef HAVE_LIBPCIACCESS
 	ret = pci_device_vgaarb_init();
 	if (ret)
 		has_arb = 0;
@@ -461,7 +461,7 @@ int do_post(int boot_flag)
 		if (is_boot && boot_flag) {
 			continue;
 		}
-#ifdef HAVE_PCI_DEVICE_VGAARB_INIT
+#ifdef HAVE_LIBPCIACCESS
 		if (pci_device_has_kernel_driver(dev)) {
 			continue;
 		}
@@ -471,7 +471,7 @@ int do_post(int boot_flag)
 			return error;
 	}
 	pci_iterator_destroy(iter);
-#ifdef HAVE_PCI_DEVICE_VGAARB_INIT
+#ifdef HAVE_LIBPCIACCESS
 	if (has_arb) {
 		pci_device_vgaarb_set_target(first_dev);
 		pci_device_vgaarb_lock();
@@ -494,8 +494,8 @@ void restore_state_from(char *data)
 	r.eax = 0x4f04;
 	r.ecx = 0xf;		/* all states */
 	r.edx = 2;		/* restore state */
-	r.es = (unsigned int) (data - LRMI_base_addr()) >> 4;
-	r.ebx = (unsigned int) (data - LRMI_base_addr()) & 0xf;
+	r.es = (uintptr_t)(data - LRMI_base_addr()) >> 4;
+	r.ebx = (uintptr_t) (data - LRMI_base_addr()) & 0xf;
 	r.ds = 0x0040;
 
 	if (!LRMI_int(0x10, &r)) {
@@ -569,15 +569,15 @@ char *__save_state(int *psize)
 
 	memset(&r, 0, sizeof(r));
 
-	fprintf(stderr, "Allocated buffer at %p (base is 0x%x)\n", buffer,
+	fprintf(stderr, "Allocated buffer at %p (base is 0x%lux)\n", buffer,
 			LRMI_base_addr());
 
 	r.eax = 0x4f04;
 	r.ecx = 0xf;		/* all states */
 	r.edx = 1;		/* save state */
 
-	r.es = (unsigned int) (buffer - LRMI_base_addr()) >> 4;
-	r.ebx = (unsigned int) (buffer - LRMI_base_addr()) & 0xf;
+	r.es = (uintptr_t) (buffer - LRMI_base_addr()) >> 4;
+	r.ebx = (uintptr_t) (buffer - LRMI_base_addr()) & 0xf;
 	r.ds = 0x0040;
 
 	fprintf(stderr, "ES: 0x%04X EBX: 0x%04X\n", r.es, r.ebx);
@@ -592,15 +592,15 @@ char *__save_state(int *psize)
 	return buffer;
 }
 
-void save_state(void)
+int save_state(void)
 {
 	int size;
 	char *buffer = __save_state(&size);
-	ssize_t num_written;
 
 	if (buffer)
 		/* FIXME: should retry on short write); */
-		num_written = write(1, buffer, size);
+	    return write(1, buffer, size);
+	return 0;
 }
 
 int do_blank(int state)
@@ -765,11 +765,11 @@ int do_get_panel_id(int just_dimensions)
     .ebx = 0x0001
   };
   struct panel_id *id = LRMI_alloc_real(sizeof(struct panel_id));
-  r.es = (unsigned short)(((int)(id-LRMI_base_addr()) >> 4) & 0xffff);
-  r.edi = (unsigned long)(id-LRMI_base_addr()) & 0xf;
+  r.es = (unsigned short)(((uintptr_t)(id-LRMI_base_addr()) >> 4) & 0xffff);
+  r.edi = (uintptr_t)(id-LRMI_base_addr()) & 0xf;
 
   if(sizeof(struct panel_id) != 32)
-    return fprintf(stderr, "oops: panel_id, sizeof struct panel_id != 32, it's %d...\n", sizeof(struct panel_id)), 7;
+    return fprintf(stderr, "oops: panel_id, sizeof struct panel_id != 32, it's %ld...\n", sizeof(struct panel_id)), 7;
 
   if(real_mode_int(0x10, &r))
     return fprintf(stderr, "Can't get panel id (vm86 failure)\n"), 8;
