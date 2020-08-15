@@ -166,6 +166,10 @@ int main(int argc, char *argv[])
 			rc = mmap((void *)0xc0000, 64*1024,
 				  PROT_READ|PROT_WRITE|PROT_EXEC,
 				  MAP_FIXED|MAP_PRIVATE, romfd, 0);
+			if (!rc) {
+    				fprintf(stderr,"unable to mmap\n");
+    				return -1;
+  			}
 		}
 
 		return do_post(0);
@@ -189,7 +193,7 @@ int main(int argc, char *argv[])
 		
 		return do_udev_post(argv[2]);
 #else
-		fprintf("no vga arb support built in\n");
+		fprintf(stderr, "no vga arb support built in\n");
 		return -1;
 #endif
 	} else if (!strcmp(argv[1], "vgastate")) {

@@ -6,4 +6,4 @@ vbetool_SOURCES = vbetool.c vbetool.h \
 
 EXTRA_DIST = vbetool.1
 
-AM_CFLAGS = -g -Wall -pedantic -std=gnu99
+AM_CFLAGS = -g -Wall -Werror -pedantic -std=gnu99
