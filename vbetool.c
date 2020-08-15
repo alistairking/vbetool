@@ -73,10 +73,10 @@ int vbetool_init (void) {
 		fprintf(stderr, "Failed to initialise LRMI (Linux Real-Mode Interface).\n");
 		exit(1);
 	}
-	
+
 	ioperm(0, 1024, 1);
 	iopl(3);
-	
+
 	pci_system_init();
 	return 0;
 }
@@ -87,9 +87,9 @@ int main(int argc, char *argv[])
 	/* Don't bother checking for privilege if they only want usage() */
 	if (argc < 2)
 		goto usage;
-	
+
 	vbetool_init();
-	
+
 	if (!strcmp(argv[1], "vbestate")) {
 		/* VBE save/restore tends to break when done underneath X */
 		int err = check_console();
@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
 			return do_set_mode(atoi(argv[2]),1);
 		}
 	} else if (!strcmp(argv[1], "post")) {
-		/* Again, we don't really want to do this while X is in 
+		/* Again, we don't really want to do this while X is in
 		   control */
 		int err = check_console();
 
@@ -181,7 +181,7 @@ int main(int argc, char *argv[])
 		}
 		return do_post(1);
 	} else if (!strcmp(argv[1], "udevpost")) {
-	
+
 #ifdef HAVE_PCI_DEVICE_VGAARB_INIT
 		int err = check_console();
 
@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
 		}
 		if (argc < 3)
 			goto usage;
-		
+
 		return do_udev_post(argv[2]);
 #else
 		fprintf(stderr, "no vga arb support built in\n");
@@ -317,14 +317,14 @@ int do_device_post(struct pci_device *dev, int has_arb)
 	int error = 0;
 	/* need to pull the ROM file */
 	unsigned int pci_id;
-	int ret;	
+	int ret;
 
 #ifdef HAVE_PCI_DEVICE_VGAARB_INIT
 	if (has_arb) {
 		pci_device_vgaarb_set_target(dev);
 		pci_device_vgaarb_lock();
 		pci_device_enable(dev);
-	
+
 		ret = pci_device_read_rom(dev, romfile);
 		if (ret) {
 			pci_device_vgaarb_unlock();
@@ -368,7 +368,7 @@ int pci_str_to_info(char *pci_string, struct pci_slot_match *match)
 	if (!tok)
 		return -1;
 	func = strtoul(tok, NULL, 16);
-	
+
 	match->domain = dom;
 	match->bus = bus;
 	match->dev = dev;
@@ -400,7 +400,7 @@ int do_udev_post(char *pci_string)
 			match.dev, match.func);
 	if (!dev)
 		return -1;
-	
+
 	error = pci_device_probe(dev);
 	if (error)
 		return -1;
@@ -575,7 +575,7 @@ char *__save_state(int *psize)
 	r.eax = 0x4f04;
 	r.ecx = 0xf;		/* all states */
 	r.edx = 1;		/* save state */
-	
+
 	r.es = (unsigned int) (buffer - LRMI_base_addr()) >> 4;
 	r.ebx = (unsigned int) (buffer - LRMI_base_addr()) & 0xf;
 	r.ds = 0x0040;
@@ -631,7 +631,7 @@ int do_set_mode (int mode, int vga) {
 	if (error<0) {
 		return error;
 	}
-	
+
 	return 0;
 }
 
@@ -707,7 +707,7 @@ int do_get_mode() {
 	if (error<0) {
 		return error;
 	}
-	
+
 	printf("%d\n",error);
 	return 0;
 }
