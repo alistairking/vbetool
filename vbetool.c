@@ -32,7 +32,6 @@ version 2
 
 #define access_ptr_register(reg_frame,reg) (reg_frame -> reg)
 #define access_seg_register(reg_frame,es) reg_frame.es
-#define real_mode_int(interrupt,reg_frame_ptr) !LRMI_int(interrupt,reg_frame_ptr)
 
 #define DPMS_STATE_ON 0x0000
 #define DPMS_STATE_STANDBY 0x0100
@@ -244,7 +243,7 @@ int do_vbe_service(unsigned int AX, unsigned int BX, reg_frame * regs)
 	access_ptr_register(regs, eax) = AX;
 	access_ptr_register(regs, ebx) = BX;
 
-	if (real_mode_int(interrupt, regs)) {
+	if (!LRMI_int(interrupt, regs)) {
 		fprintf(stderr,
 			"Error: something went wrong performing real mode interrupt\n");
 		return -1;
@@ -771,7 +770,7 @@ int do_get_panel_id(int just_dimensions)
   if(sizeof(struct panel_id) != 32)
     return fprintf(stderr, "oops: panel_id, sizeof struct panel_id != 32, it's %ld...\n", sizeof(struct panel_id)), 7;
 
-  if(real_mode_int(0x10, &r))
+  if(!LRMI_int(0x10, &r))
     return fprintf(stderr, "Can't get panel id (vm86 failure)\n"), 8;
 
   if((r.eax & 0xff) != 0x4f)
